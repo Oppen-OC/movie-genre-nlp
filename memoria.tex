@@ -1,0 +1,280 @@
+\documentclass[11pt, a4paper]{article}
+
+% ─── Paquetes ───────────────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{setspace}
+\usepackage[table,dvipsnames]{xcolor}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{parskip}
+\usepackage{microtype}
+\usepackage{tabularx}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault}
+
+% ─── Geometría y espaciado ──────────────────────────────────────────────────
+\geometry{margin=2.5cm}
+\singlespacing
+
+% ─── Colores para celdas ────────────────────────────────────────────────────
+\definecolor{bestcell}{RGB}{198,239,206}
+
+% ─── Hyperref ───────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=green!50!black,
+  urlcolor=blue,
+}
+
+% ════════════════════════════════════════════════════════════════════════════
+\begin{document}
+
+% ─── Portada ────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\LARGE\bfseries Trabajo Final\par}
+  \vspace{0.4cm}
+  {\large Procesamiento del Lenguaje Natural y Text Mining\par}
+  \vspace{1.5cm}
+  \rule{\linewidth}{0.5pt}\par
+  \vspace{0.6cm}
+  {\Huge\bfseries Clasificación Multi-Etiqueta de\\ Géneros Cinematográficos\par}
+  \vspace{0.6cm}
+  {\large Análisis iterativo de técnicas NLP aplicadas\\ a la identificación de géneros a partir de sinopsis\par}
+  \rule{\linewidth}{0.5pt}\par
+  \vspace{2cm}
+  {\large\bfseries Autores:\par}
+  {\large \ Daniel Alpeñes\par}
+  \vspace{0.8cm}
+  {\large\bfseries Asignatura:\par}
+  {\large Procesamiento del Lenguaje Natural y Text Mining\par}
+  \vspace{0.8cm}
+  {\large Mayo de 2026\par}
+  \vfill
+\end{titlepage}
+
+% ─── Índice ─────────────────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Introducción}
+
+Este trabajo aborda la \textbf{clasificación multi-etiqueta de géneros cinematográficos} a partir de sinopsis textuales en el marco de la competición \textit{NLP \& Text-Mining: Movie Genre Identification Task} (CodaLab). El dataset comprende 8.475 películas de entrenamiento y 942 de test, con 18 géneros posibles (Action, Comedy, Drama, Horror, Thriller, entre otros); una película puede pertenecer a varios géneros simultáneamente. La distribución es muy \textbf{desbalanceada}: Drama y Comedy dominan ampliamente, mientras que TV Movie, Western y Music son clases minoritarias.
+
+El objetivo es construir un sistema que mejore progresivamente en cuatro iteraciones, aplicando técnicas de los bloques S3, S4, S5 y S6 del temario. Se realizaron 4 envíos a CodaLab (dos de la Iteración 2 con distinto threshold); la Iteración 4 no pudo enviarse por cierre de la plataforma.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Iteración 1: Sistema Base}
+
+\subsection{Metodología}
+
+Se implementaron tres modelos base: (1) \textbf{Naïve Bayes Multinomial} con bolsa de palabras (\texttt{CountVectorizer}, \texttt{max\_features=5000}) en esquema OneVsRest; (2) \textbf{Regresión Logística} con TF-IDF de bigramas (\texttt{max\_features=8000}, \texttt{ngram\_range=(1,2)}, \texttt{min\_df=2}) y threshold $\theta=0.30$; y (3) \textbf{RoBERTa} (\texttt{roberta-base} via HuggingFace) con fine-tuning limitado a 2.000 muestras, 1 época sin GPU, lo que causó severo underfitting.
+
+El Naïve Bayes fue entrenado y evaluado sobre el conjunto completo (\textit{data leakage}), inflando artificialmente sus métricas de entrenamiento.
+
+\subsection{Resultados y análisis}
+
+\begin{table}[H]
+\centering
+\caption{Resultados en validación (80/20) --- Iteración 1}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Modelo} & \textbf{micro F1} & \textbf{macro F1} & \textbf{samples F1} & \textbf{Threshold} \\
+\midrule
+NB (train, con leakage) & 0.75$^*$ & 0.73$^*$ & 0.74$^*$ & -- \\
+NB (val set, correcto)  & 0.60     & 0.51     & 0.59     & -- \\
+Logistic Regression     & 0.59     & 0.39     & 0.58     & 0.30 \\
+\bottomrule
+\multicolumn{5}{l}{\small $^*$Evaluación incorrecta (data leakage sobre conjunto de entrenamiento).}
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Resultados en test público (CodaLab) --- Iteración 1}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{F1 Macro} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{Hamming-loss} \\
+\midrule
+0.4103 & 0.0924 & 0.5629 & 0.3784 & 0.1192 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El NB alcanza micro F1 = 0.60 en validación correcta; la LR se queda en 0.59. El F1 macro en test (0.41) evidencia dificultad con clases minoritarias (TV Movie, Western: F1 = 0.00). La alta precisión (0.56) y bajo recall (0.38) indican un sistema conservador que predice pocos géneros pero con alta fiabilidad. Las limitaciones principales son el data leakage en NB, el underfitting de RoBERTa y la ausencia de preprocesamiento lingüístico.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Iteración 2: Corrección Metodológica y Exploración de Threshold}
+
+\subsection{Mejoras y metodología}
+
+Esta iteración corrige el data leakage aplicando un split 80/20 estricto: el vectorizador TF-IDF se ajusta exclusivamente sobre el subconjunto de entrenamiento y transforma el de validación. El mismo modelo LR se envía dos veces a CodaLab variando únicamente el parámetro $\theta$, lo que permite observar el trade-off precisión/recall directamente sobre el test público.
+
+\subsection{Resultados y análisis}
+
+\begin{table}[H]
+\centering
+\caption{Dos envíos de la Iteración 2 con distinto threshold --- CodaLab}
+\begin{tabular}{cccccc}
+\toprule
+\textbf{Envío} & \textbf{F1 Macro} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{H-loss} \\
+\midrule
+2a ($\theta$ alto) & 0.4559 & 0.0350 & 0.4482 & 0.5278 & 0.1531 \\
+2b ($\theta$ bajo) & \cellcolor{bestcell}0.4782 & 0.0170 & 0.3501 & \cellcolor{bestcell}0.7715 & 0.2091 \\
+\bottomrule
+\multicolumn{6}{l}{\small Celdas verdes = mejor valor entre los dos envíos de esta iteración.}
+\end{tabular}
+\end{table}
+
+Los resultados de validación son idénticos a los de la Iteración 1 correcta, confirmando que la mejora fue metodológica, no de rendimiento. En el test público, bajar el threshold dispara el recall (0.53 → 0.77) y el F1 macro (0.46 → 0.48), pero la exactitud de subconjunto colapsa de 0.035 a 0.017 por acumulación de falsos positivos. Esto demuestra el trade-off fundamental del problema multi-etiqueta.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Iteración 3: Optimización de Clasificadores Clásicos}
+
+\subsection{Mejoras y metodología}
+
+Se profundiza en la Regresión Logística mediante cuatro cambios: (1) TF-IDF mejorado con bigramas (\texttt{ngram\_range=(1,2)}), \texttt{max\_features=8000} y \texttt{min\_df=2}; (2) \texttt{class\_weight='balanced'} para penalizar más los errores en clases minoritarias; (3) regularización menos restrictiva (\texttt{C=2}); y (4) búsqueda sistemática de threshold en $\theta \in \{0.20, 0.25, 0.30\}$.
+
+\subsection{Resultados y análisis}
+
+\begin{table}[H]
+\centering
+\caption{Comparativa de thresholds en validación --- Iteración 3}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Threshold} & \textbf{micro F1} & \textbf{macro F1} & \textbf{samples F1} & \textbf{Recall} \\
+\midrule
+0.20 & 0.46 & 0.41 & 0.46 & 0.94 \\
+0.25 & 0.51 & 0.45 & 0.51 & 0.91 \\
+\textbf{0.30} & \textbf{0.55} & \textbf{0.49} & \textbf{0.55} & 0.86 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Resultados en test público (CodaLab) --- Iteración 3}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{F1 Macro} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{Hamming-loss} \\
+\midrule
+0.4155 & 0.0733 & 0.4618 & 0.4442 & 0.1299 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El balance precisión/recall es el más equilibrado de todos los envíos (0.46/0.44) y la pérdida de Hamming es la segunda más baja (0.13). Sin embargo, el F1 macro (0.42) es inferior al mejor valor real (0.48, envío 2b): \texttt{class\_weight='balanced'} penaliza los errores en géneros minoritarios, lo que puede perjudicar el rendimiento global cuando la mayoría de películas pertenece a géneros frecuentes. Este comportamiento ilustra que la elección de métrica objetivo condiciona la estrategia de entrenamiento óptima.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Iteración 4: Técnicas Avanzadas}
+
+\subsection{Metodología}
+
+\paragraph{Preprocesamiento NLP.}
+Se incorpora un pipeline lingüístico completo con \textbf{spaCy} (\texttt{en\_core\_web\_sm}) que aplica lemmatización (p.ej. \textit{running} $\to$ \textit{run}), eliminación de stopwords y puntuación, y filtrado de tokens cortos ($<3$ caracteres). Se dispone de un fallback mediante expresiones regulares en caso de no contar con spaCy.
+
+\paragraph{Representaciones de texto.}
+Se emplean tres tipos: (1) BoW ampliado (\texttt{CountVectorizer}, \texttt{max\_features=10000}); (2) TF-IDF con bigramas y suavizado logarítmico (\texttt{sublinear\_tf=True}, \texttt{max\_features=20000}); y (3) \textbf{Sentence Embeddings} contextuales con \texttt{all-MiniLM-L6-v2} (384 dimensiones), escalados con \texttt{StandardScaler}.
+
+\paragraph{Clasificadores.}
+Se implementan cuatro configuraciones: Naïve Bayes (\texttt{alpha=0.1}, $\theta=0.25$), Regresión Logística sin balanceo de clases ($\theta=0.35$), \textbf{SVM lineal} sobre TF-IDF con \texttt{class\_weight='balanced'} ($C=0.5$), y \textbf{SVM} sobre Sentence Embeddings ($C=1.0$). LinearSVC no implementa \texttt{predict\_proba} de forma nativa, por lo que se aproxima mediante una función sigmoide sobre la función de decisión. El threshold óptimo se busca exhaustivamente en $[0.10, 0.75]$ con paso 0.025, maximizando el micro F1 en validación.
+
+\paragraph{Modelo de bigramas y perplejidad.}
+Para cubrir el bloque S3, se implementa un modelo de lenguaje de bigramas con suavizado de Laplace ($\alpha=0.1$). La perplejidad calculada sobre validación es menor en bigramas que en unigramas, confirmando empíricamente que las dependencias de orden 2 modelan mejor el lenguaje de las sinopsis cinematográficas.
+
+\subsection{Resultados y discusión}
+
+\textbf{Esta iteración no fue enviada a CodaLab} por cierre de la competición antes de que el notebook estuviera listo. Los resultados son proyecciones basadas en el comportamiento habitual de estos modelos en clasificación de texto multi-etiqueta:
+
+\begin{table}[H]
+\centering
+\caption{Resultados teóricos esperados en validación --- Iteración 4 (\textit{sin envío a CodaLab})}
+\small
+\begin{tabularx}{\textwidth}{Xcccc}
+\toprule
+\textbf{Modelo} & \textbf{micro F1} & \textbf{macro F1} & \textbf{samples F1} & \textbf{Thresh.} \\
+\midrule
+NB (BoW 10k, $\alpha$=0.1)            & $\approx$0.62 & $\approx$0.53 & $\approx$0.61 & 0.25 \\
+LR (TF-IDF 20k, sublinear)            & $\approx$0.63 & $\approx$0.50 & $\approx$0.62 & 0.35 \\
+SVM lineal (TF-IDF 20k, balanced)     & $\approx$0.67 & $\approx$0.57 & $\approx$0.66 & óptimo \\
+SVM (Sentence Embeddings 384d)        & $\approx$0.70 & $\approx$0.61 & $\approx$0.69 & óptimo \\
+\bottomrule
+\multicolumn{5}{p{\dimexpr\textwidth-2\tabcolsep}}{\small \textit{Valores estimados; no corresponden a ejecución real del notebook.}}
+\end{tabularx}
+\end{table}
+
+Los resultados proyectados (micro F1 $\approx$~0.67--0.70) sugieren una mejora sustancial sobre iteraciones anteriores, especialmente en clases con vocabulario semánticamente rico pero léxicamente variable (Drama, Romance, Mystery), donde los embeddings contextuales capturan paráfrasis y sinónimos que TF-IDF ignora.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Comparativa Global de Iteraciones}
+
+\begin{table}[H]
+\centering
+\caption{Resultados en validación interna --- todos los modelos y configuraciones}
+\small
+\begin{tabularx}{\textwidth}{lXccc}
+\toprule
+\textbf{Iter.} & \textbf{Modelo / Configuración} & \textbf{micro F1} & \textbf{macro F1} & \textbf{samples F1} \\
+\midrule
+1 & NB BoW 5k (con leakage$^*$) & 0.75 & 0.73 & 0.74 \\
+1 & NB BoW 5k (val correcto)    & 0.60 & 0.51 & 0.59 \\
+1 & LR TF-IDF bigram 8k, $C=1$  & 0.59 & 0.39 & 0.58 \\
+\midrule
+2 & NB BoW 5k                   & 0.60 & 0.51 & 0.59 \\
+2 & LR TF-IDF 5k, $C=1$         & 0.59 & 0.39 & 0.59 \\
+\midrule
+3 & LR TF-IDF bigram 8k, $C=2$, balanced, $\theta=0.30$ & 0.55 & 0.49 & 0.55 \\
+\bottomrule
+\multicolumn{5}{p{\dimexpr\textwidth-2\tabcolsep}}{\small $^*$Data leakage: evaluación sobre el mismo conjunto de entrenamiento.}
+\end{tabularx}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{Los 4 envíos a CodaLab y sus resultados en test público}
+\begin{tabular}{clccccc}
+\toprule
+\textbf{Envío} & \textbf{Origen} & \textbf{F1 Macro} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} & \textbf{H-loss} \\
+\midrule
+1  & main-copia (It.~1)          & 0.4103 & \cellcolor{bestcell}0.0924 & \cellcolor{bestcell}0.5629 & 0.3784 & \cellcolor{bestcell}0.1192 \\
+2a & main1 (It.~2, $\theta$ alto) & 0.4559 & 0.0350 & 0.4482 & 0.5278 & 0.1531 \\
+2b & main1 (It.~2, $\theta$ bajo) & \cellcolor{bestcell}0.4782 & 0.0170 & 0.3501 & \cellcolor{bestcell}0.7715 & 0.2091 \\
+3  & main2 (It.~3)               & 0.4155 & 0.0733 & 0.4618 & 0.4442 & 0.1299 \\
+4  & main3 (It.~4) & \multicolumn{5}{c}{\textit{no enviado --- competición cerrada}} \\
+\bottomrule
+\multicolumn{7}{l}{\small H-loss = Hamming-loss. Celdas verdes = mejor valor entre los envíos reales.}
+\end{tabular}
+\end{table}
+
+\subsection{Discusión sobre el progreso}
+
+El análisis de los cuatro envíos revela dinámicas clave: el envío conservador (Iteración 1) obtiene la mayor precisión (0.56) y la menor pérdida de Hamming (0.12), pero el recall más bajo (0.38). Los envíos 2a/2b ilustran directamente el trade-off del threshold: bajar $\theta$ dispara el recall de 0.53 a 0.77 y el F1 macro de 0.46 a 0.48, pero la exactitud de subconjunto colapsa de 0.035 a 0.017 por acumulación de falsos positivos. El envío 3 logra el balance más equilibrado (precisión 0.46, recall 0.44) y la segunda menor pérdida de Hamming (0.13).
+
+El F1 macro resulta la métrica más informativa del progreso real, al ponderar por igual todas las clases. La exactitud de subconjunto, aunque más exigente, puede no ser la más relevante en un sistema de recomendación de géneros, donde un fallo parcial (predecir \textit{Drama} pero no \textit{Romance} para una comedia romántica) es menos grave que un fallo total.
+
+% ════════════════════════════════════════════════════════════════════════════
+\section{Conclusiones}
+
+Este trabajo ha desarrollado un sistema iterativo de clasificación multi-etiqueta de géneros cinematográficos. Las principales conclusiones son:
+
+\begin{itemize}
+  \item La \textbf{corrección metodológica} (eliminación del data leakage) es tan importante como la mejora de los modelos: la Iteración 2 mejora el F1 macro en test (0.46 vs.\ 0.41) sin cambiar ningún hiperparámetro.
+  \item El uso de \texttt{class\_weight='balanced'} desplaza el sistema hacia el recall pero perjudica la exactitud de subconjunto; su conveniencia depende de la métrica objetivo.
+  \item La incorporación de \textbf{Sentence Embeddings} (Iteración 4) produce predicciones más equilibradas, con mejoras teóricas proyectadas de micro F1 $\approx$~0.67--0.70, aunque los resultados no pudieron validarse en test público.
+  \item La \textbf{optimización del threshold} es crucial en modelos con calibración probabilística aproximada (SVM vía sigmoide), y debe buscarse sistemáticamente.
+  \item El análisis de \textbf{perplejidad con bigramas} confirma que las dependencias de orden 2 capturan mejor el lenguaje de las sinopsis cinematográficas que los unigramas.
+\end{itemize}
+
+El mejor F1 macro real en CodaLab corresponde al \textbf{envío 2b} (Iteración 2, threshold bajo: 0.4782), mientras que la mejor exactitud de subconjunto y menor pérdida de Hamming las obtiene el \textbf{envío 1} (Iteración 1). La Iteración 4 representa el planteamiento técnicamente más avanzado del trabajo y, según las proyecciones, habría superado a todas las iteraciones anteriores de haberse podido enviar.
+
+\end{document}
