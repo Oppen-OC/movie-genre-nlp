@@ -1,5 +1,11 @@
-.ipynb_checkpoints/
-__pycache__/
 .venv/
+__pycache__/
+.ipynb_checkpoints/
 .env
-
+.pytest_cache/
+outputs/
+results-tmp/
+*.aux
+*.log
+*.out
+*.toc
