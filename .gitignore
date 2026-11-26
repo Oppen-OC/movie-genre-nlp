@@ -9,3 +9,9 @@ results-tmp/
 *.log
 *.out
 *.toc
+memoria.fdb_latexmk
+memoria.fls
+memoria.aux
+memoria.toc
+memoria.log
+memoria.out
