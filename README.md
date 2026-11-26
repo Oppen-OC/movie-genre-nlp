@@ -2,7 +2,7 @@
 
 Clasificación multi-etiqueta de géneros de películas (18 géneros) a partir de su sinopsis, comparando Naive Bayes, regresión logística y un Transformer (RoBERTa) bajo el mismo protocolo de evaluación.
 
-Proyecto del curso *Procesamiento del Lenguaje Natural y Text Mining* (UPV), basado en la competición CodaLab *NLP & Text-Mining: Movie Genre Identification Task*. Se hizo en pareja; este repo es la versión consolidada y reproducible.
+Trabajo final del curso *Natural Language Processing & Text Mining* (MIABDA, UPV), sobre la tarea *Movie Genre Identification* alojada en Codabench por la asignatura ([resumen del enunciado](docs/exercise-statement.md)). Este repo es la versión consolidada y reproducible del trabajo.
 
 ## Enfoque
 
@@ -47,13 +47,13 @@ python src/roberta.py --epochs 3
 ## Estructura
 
 ```
-data/            train.csv, test.csv (competición CodaLab)
+data/            train.csv (8.475 películas), test.csv (942, sin etiquetas): datos del curso
 src/genre_clf.py datos, splits, umbral, métricas, NB y LR
 src/roberta.py   fine-tuning de roberta-base sobre los mismos splits
 notebooks/       notebook de referencia (exploración + resultados)
 results/         metrics.json con las métricas de la última ejecución
 tests/           umbral, splits reproducibles y modelos > baseline
-docs/            memoria del trabajo (memoria.tex)
+docs/            memoria (memoria.tex / memoria.pdf) y resumen del enunciado
 ```
 
 ## Decisiones de diseño
@@ -68,8 +68,8 @@ docs/            memoria del trabajo (memoria.tex)
 - Una única semilla y un único split: las diferencias de pocos puntos (NB vs LR) no son concluyentes.
 - Sin lematización ni spaCy (la memoria usó spaCy en una iteración); aquí la limpieza es solo regex para mantener el pipeline sin descargas.
 - RoBERTa se entrena con 128 tokens máximo y sin búsqueda de hiperparámetros. Difiere de la memoria original (2.000 muestras, 1 época, sin validación).
-- Las cifras de la memoria (`docs/memoria.tex`) vienen de envíos a CodaLab y de otro protocolo; no son comparables con esta tabla.
+- Las cifras de la memoria (`docs/memoria.pdf`) vienen de envíos a la plataforma del curso y de otro protocolo; no son comparables con esta tabla. La métrica oficial del ranking era macro-F1 sobre el test oculto; aquí se reportan además micro y samples-F1 sobre un holdout propio.
 
 ## Licencia
 
-MIT. Los datos pertenecen a la competición de origen.
+MIT para el código. Los datos son material del curso.
