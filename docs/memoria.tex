@@ -53,7 +53,7 @@
   \rule{\linewidth}{0.5pt}\par
   \vspace{2cm}
   {\large\bfseries Autores:\par}
-  {\large \ Daniel Alpeñes\par}
+  {\large Daniel Alpeñes\par}
   \vspace{0.8cm}
   {\large\bfseries Asignatura:\par}
   {\large Procesamiento del Lenguaje Natural y Text Mining\par}
@@ -194,11 +194,11 @@ Para cubrir el bloque S3, se implementa un modelo de lenguaje de bigramas con su
 
 \subsection{Resultados y discusión}
 
-\textbf{Esta iteración no fue enviada a CodaLab} por cierre de la competición antes de que el notebook estuviera listo. Los resultados son proyecciones basadas en el comportamiento habitual de estos modelos en clasificación de texto multi-etiqueta:
+\textbf{Esta iteración no fue enviada a CodaLab} por cierre de la competición antes de que el notebook estuviera listo. \textbf{Aviso:} los valores de esta sección son \textbf{estimaciones a priori, no medidas}: no proceden de ninguna ejecución. Las cifras medidas con un protocolo reproducible están en el \texttt{README.md} del repositorio.
 
 \begin{table}[H]
 \centering
-\caption{Resultados teóricos esperados en validación --- Iteración 4 (\textit{sin envío a CodaLab})}
+\caption{\textbf{[ESTIMACIÓN, NO MEDIDO]} Resultados esperados en validación --- Iteración 4 (\textit{sin envío a CodaLab})}
 \small
 \begin{tabularx}{\textwidth}{Xcccc}
 \toprule
@@ -213,7 +213,7 @@ SVM (Sentence Embeddings 384d)        & $\approx$0.70 & $\approx$0.61 & $\approx
 \end{tabularx}
 \end{table}
 
-Los resultados proyectados (micro F1 $\approx$~0.67--0.70) sugieren una mejora sustancial sobre iteraciones anteriores, especialmente en clases con vocabulario semánticamente rico pero léxicamente variable (Drama, Romance, Mystery), donde los embeddings contextuales capturan paráfrasis y sinónimos que TF-IDF ignora.
+Estas estimaciones (micro F1 $\approx$~0.67--0.70), no verificadas, apuntaban a una mejora sobre iteraciones anteriores, especialmente en clases con vocabulario semánticamente rico pero léxicamente variable (Drama, Romance, Mystery), donde los embeddings contextuales capturan paráfrasis y sinónimos que TF-IDF ignora.
 
 % ════════════════════════════════════════════════════════════════════════════
 \section{Comparativa Global de Iteraciones}
@@ -270,11 +270,11 @@ Este trabajo ha desarrollado un sistema iterativo de clasificación multi-etique
 \begin{itemize}
   \item La \textbf{corrección metodológica} (eliminación del data leakage) es tan importante como la mejora de los modelos: la Iteración 2 mejora el F1 macro en test (0.46 vs.\ 0.41) sin cambiar ningún hiperparámetro.
   \item El uso de \texttt{class\_weight='balanced'} desplaza el sistema hacia el recall pero perjudica la exactitud de subconjunto; su conveniencia depende de la métrica objetivo.
-  \item La incorporación de \textbf{Sentence Embeddings} (Iteración 4) produce predicciones más equilibradas, con mejoras teóricas proyectadas de micro F1 $\approx$~0.67--0.70, aunque los resultados no pudieron validarse en test público.
+  \item La incorporación de \textbf{Sentence Embeddings} (Iteración 4) produce predicciones más equilibradas, con una mejora \emph{estimada, no medida} de micro F1 $\approx$~0.67--0.70; no se ejecutó ni se validó en test público.
   \item La \textbf{optimización del threshold} es crucial en modelos con calibración probabilística aproximada (SVM vía sigmoide), y debe buscarse sistemáticamente.
   \item El análisis de \textbf{perplejidad con bigramas} confirma que las dependencias de orden 2 capturan mejor el lenguaje de las sinopsis cinematográficas que los unigramas.
 \end{itemize}
 
-El mejor F1 macro real en CodaLab corresponde al \textbf{envío 2b} (Iteración 2, threshold bajo: 0.4782), mientras que la mejor exactitud de subconjunto y menor pérdida de Hamming las obtiene el \textbf{envío 1} (Iteración 1). La Iteración 4 representa el planteamiento técnicamente más avanzado del trabajo y, según las proyecciones, habría superado a todas las iteraciones anteriores de haberse podido enviar.
+El mejor F1 macro real en CodaLab corresponde al \textbf{envío 2b} (Iteración 2, threshold bajo: 0.4782), mientras que la mejor exactitud de subconjunto y menor pérdida de Hamming las obtiene el \textbf{envío 1} (Iteración 1). La Iteración 4 representa el planteamiento técnicamente más avanzado del trabajo pero su rendimiento no se midió, por lo que no puede afirmarse que superase a las iteraciones anteriores.
 
 \end{document}
